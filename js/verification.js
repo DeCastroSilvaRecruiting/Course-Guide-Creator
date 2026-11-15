@@ -14,8 +14,14 @@ const Verification = {
     check(hole.par);
     check(hole.stroke_index);
     check(Scorecard.bestYardage(hole));
-    check(hole.tee_sets && hole.tee_sets.length);
-    check(hole.strategy_data && hole.strategy_data.landing_zones && hole.strategy_data.landing_zones.length);
+    // Pass the arrays themselves (not their .length) — check()'s own
+    // empty-array handling is what makes an empty array not count as
+    // "filled"; `arr && arr.length` collapses an empty array to the
+    // number 0, which check() does NOT treat as empty (0 !== "" and
+    // 0 isn't an array), so a hole with zero tee sets/landing zones was
+    // incorrectly scored as complete on those fields.
+    check(hole.tee_sets);
+    check(hole.strategy_data && hole.strategy_data.landing_zones);
     check(hole.green_data && hole.green_data.center_lat);
     check(hole.green_data && hole.green_data.polygon);
     check(hole.green_reading_data && hole.green_reading_data.high_point);
