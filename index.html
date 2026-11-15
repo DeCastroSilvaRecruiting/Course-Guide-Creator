@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Course Guide Creator</title>
+<meta name="description" content="Build a detailed course guide for any golf course — search, confirm, and map tees, greens and hazards." />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#173d2b" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" />
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+<div class="shell">
+
+  <div class="card">
+    <div class="hero">
+      <div class="kicker">Course Guide Creator</div>
+      <h1>Build a course guide for any golf course</h1>
+      <p class="lead">Search a course, confirm the right match on the map, then fill in tees, greens, hazards and
+        green-reading notes hole by hole. Everything is saved to this browser only.</p>
+    </div>
+    <div class="content">
+
+      <details class="section" id="settings-section">
+        <summary class="section-title" style="cursor:pointer; display:inline;">Settings — Mapbox &amp; elevation keys</summary>
+        <p class="section-copy">These are free API keys you create yourself. They're stored only in this browser's
+          local storage, never committed to the repo. Get a Mapbox public token at
+          <a href="https://account.mapbox.com/" target="_blank" rel="noopener">account.mapbox.com</a> (restrict it to
+          your GitHub Pages domain) and an OpenTopography key at
+          <a href="https://opentopography.org/" target="_blank" rel="noopener">opentopography.org</a> (optional —
+          only needed for elevation data).</p>
+        <form id="settings-form" class="search-form">
+          <div class="field">
+            <label for="mapbox-token">Mapbox public token</label>
+            <input id="mapbox-token" type="text" placeholder="pk.eyJ1Ijoi..." autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="opentopo-key">OpenTopography API key (optional)</label>
+            <input id="opentopo-key" type="text" placeholder="Leave blank to skip elevation" autocomplete="off" />
+          </div>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <button class="btn" type="submit">Save settings</button>
+            <span id="settings-status" style="color:#237044; font-size:13px; font-weight:700;"></span>
+          </div>
+        </form>
+      </details>
+
+      <div class="section">
+        <h2 class="section-title">Your saved course guides</h2>
+        <div id="my-courses"></div>
+      </div>
+
+      <!-- SEARCH VIEW -->
+      <div id="view-search" class="section">
+        <h2 class="section-title">Find a course</h2>
+        <p class="section-copy">Enter a course name (and optionally a city or region to narrow it down).</p>
+        <form id="search-form" class="search-form">
+          <div class="field">
+            <label for="course-name">Course name</label>
+            <input id="course-name" type="text" placeholder="e.g. Emirates Golf Club" required />
+          </div>
+          <div class="field">
+            <label for="location">City / region (optional)</label>
+            <input id="location" type="text" placeholder="e.g. Dubai, UAE" />
+          </div>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <button class="btn" id="search-submit" type="submit">Search</button>
+            <span id="search-status" style="font-size:13px; color:#607267;"></span>
+          </div>
+        </form>
+      </div>
+
+      <!-- CONFIRMATION VIEW -->
+      <div id="view-confirm" class="section" style="display:none;">
+        <h2 class="section-title">Confirm the right course</h2>
+        <p class="section-copy">We found more than one match for "<span id="confirm-course-name"></span>" — pick the
+          right one before we build the guide.</p>
+        <div id="confirm-candidates"></div>
+        <div style="margin-top:14px;">
+          <button class="btn secondary" id="back-to-search" type="button">&larr; Back to search</button>
+        </div>
+      </div>
+
+      <!-- RESULTS VIEW -->
+      <div id="view-results" class="section" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:10px;">
+          <div>
+            <h2 class="section-title" id="results-course-name" style="margin-bottom:2px;"></h2>
+            <p class="section-copy" id="results-location" style="margin:0;"></p>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <a class="btn secondary" id="results-builder-link" href="#">Hole builder</a>
+            <a class="btn" id="results-play-link" href="#">Play this course &rarr;</a>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3 class="section-title" style="font-size:16px;">Map</h3>
+          <div class="map-card">
+            <div id="results-map" class="map-canvas"></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3 class="section-title" style="font-size:16px;">Boundary</h3>
+          <div id="results-boundary-panel"></div>
+        </div>
+
+        <div class="section">
+          <h3 class="section-title" style="font-size:16px;">Elevation</h3>
+          <div id="results-elevation-panel"></div>
+        </div>
+
+        <div class="section">
+          <h3 class="section-title" style="font-size:16px;">Scorecard</h3>
+          <div id="results-scorecard"></div>
+        </div>
+
+        <div class="section">
+          <h3 class="section-title" style="font-size:16px;">Hole-by-hole verification</h3>
+          <div id="results-verification"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer class="app-footer">Course Guide Creator — data from OpenStreetMap (Nominatim &amp; Overpass), Mapbox and OpenTopography. Saved locally in your browser.</footer>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/geocode.js"></script>
+<script src="js/elevation.js"></script>
+<script src="js/maps.js"></script>
+<script src="js/scorecard.js"></script>
+<script src="js/verification.js"></script>
+<script src="js/app.js"></script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  }
+</script>
+</body>
+</html>

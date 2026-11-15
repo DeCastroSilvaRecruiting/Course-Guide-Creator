@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Play — Course Guide Creator</title>
+<meta name="description" content="Live on-course distances to the green, landing zones and hazards from your phone's GPS." />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#173d2b" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" />
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+<div class="shell">
+
+  <div class="card">
+    <div class="hero">
+      <div class="kicker">On the course</div>
+      <h1 id="play-course-name">Course</h1>
+      <p class="lead">Live distances from wherever you're standing, using your phone's own GPS — this is the part
+        that works like a rangefinder. Accuracy depends on your phone's GPS, usually within a few metres outdoors.</p>
+    </div>
+    <div class="content">
+
+      <div class="section" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button class="btn secondary small" id="play-prev">&larr; Prev hole</button>
+          <select id="play-hole-select" style="padding:9px 12px; border:1px solid #ccd6cd; border-radius:10px;"></select>
+          <button class="btn secondary small" id="play-next">Next hole &rarr;</button>
+        </div>
+        <a class="btn secondary small" href="index.html">&larr; Back to course</a>
+      </div>
+
+      <div class="section" id="play-hole-summary"></div>
+
+      <div class="section">
+        <button class="btn" id="play-track-btn" type="button">Start tracking my position</button>
+        <span id="play-track-status" style="margin-left:10px; font-size:13px; color:#607267;"></span>
+      </div>
+
+      <div class="section">
+        <div class="map-card">
+          <div id="play-map" class="map-canvas tall"></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3 class="section-title" style="font-size:16px;">Live distances</h3>
+        <div id="play-distances" class="panel panel-muted">Start tracking to see live distances to the green and
+          landing zones from wherever you're standing.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer class="app-footer">Course Guide Creator — your location is used only in this browser tab to compute distances; nothing is sent anywhere.</footer>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/maps.js"></script>
+<script src="js/scorecard.js"></script>
+<script src="js/play.js"></script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  }
+</script>
+</body>
+</html>

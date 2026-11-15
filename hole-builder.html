@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hole Builder — Course Guide Creator</title>
+<meta name="description" content="Click-to-place tee, landing zones, bunkers, green outline and slope notes for one hole." />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#173d2b" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" />
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+<div class="shell">
+
+  <div class="card">
+    <div class="hero">
+      <div class="kicker">Hole Builder</div>
+      <h1 id="hb-course-name">Course</h1>
+      <p class="lead">Click the map to place markers for the mode selected on the right. Everything is saved to this
+        browser as you go — switch holes freely.</p>
+    </div>
+    <div class="content">
+
+      <div class="section" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button class="btn secondary small" id="hb-prev">&larr; Prev hole</button>
+          <select id="hb-hole-select" class="field" style="padding:9px 12px; border:1px solid #ccd6cd; border-radius:10px;"></select>
+          <button class="btn secondary small" id="hb-next">Next hole &rarr;</button>
+        </div>
+        <a class="btn secondary small" id="hb-back-link" href="index.html">&larr; Back to course</a>
+      </div>
+
+      <div class="section builder-layout">
+        <div>
+          <div class="map-card">
+            <div id="hb-map" class="map-canvas tall"></div>
+          </div>
+          <div class="panel panel-muted" style="margin-top:12px;" id="hb-distances"></div>
+        </div>
+
+        <div class="builder-panel">
+          <div class="mode-tabs">
+            <button class="mode-tab active" data-tab="hole">Hole setup</button>
+            <button class="mode-tab" data-tab="green">Green detail</button>
+          </div>
+
+          <div id="hb-tab-hole">
+            <div class="field-row">
+              <div class="field"><label>Par</label><input id="hb-par" type="number" min="3" max="6" /></div>
+              <div class="field"><label>Stroke index</label><input id="hb-si" type="number" min="1" max="18" /></div>
+            </div>
+            <div class="field" style="margin-top:10px;"><label>Hole name (optional)</label><input id="hb-name" type="text" /></div>
+
+            <div class="field" style="margin-top:16px;">
+              <label>Tee sets — real courses have several; add as many as you want to map</label>
+              <div style="display:flex; gap:6px;">
+                <select id="hb-tee-preset">
+                  <option value="">Custom name…</option>
+                </select>
+                <button class="btn secondary small" id="hb-add-tee-mode" type="button">Click map to add</button>
+              </div>
+              <div id="hb-tee-list" style="margin-top:8px; display:grid; gap:6px;"></div>
+            </div>
+
+            <div class="marker-modes" style="margin-top:16px;">
+              <button class="marker-mode-btn active" data-mode="landing"><span class="swatch swatch-lz"></span>Add landing zone</button>
+              <button class="marker-mode-btn" data-mode="bunker"><span class="swatch swatch-bunker"></span>Add bunker / hazard</button>
+              <button class="marker-mode-btn" data-mode="green"><span class="swatch swatch-green"></span>Add green outline point</button>
+            </div>
+            <button class="btn secondary small" id="hb-clear-green-outline" type="button">Clear green outline</button>
+
+            <div class="field" style="margin-top:14px;"><label>Notes</label><textarea id="hb-notes" rows="3"></textarea></div>
+          </div>
+
+          <div id="hb-tab-green" style="display:none;">
+            <p class="section-copy" style="margin-top:0;">Mark the green's high point, low point, and optional slope
+              arrows (click once for the start of an arrow, then once more for where it breaks to).</p>
+            <div class="marker-modes">
+              <button class="marker-mode-btn" data-mode="high"><span class="swatch swatch-high"></span>Set high point</button>
+              <button class="marker-mode-btn" data-mode="low"><span class="swatch swatch-low"></span>Set low point</button>
+              <button class="marker-mode-btn" data-mode="slope"><span class="swatch swatch-high"></span>Add slope arrow</button>
+            </div>
+            <button class="btn secondary small" id="hb-clear-slopes" type="button">Clear slope arrows</button>
+            <div class="field" style="margin-top:12px;"><label>Slope confidence</label>
+              <select id="hb-slope-confidence">
+                <option value="">—</option>
+                <option value="high">High — verified on-site or from clear imagery</option>
+                <option value="medium">Medium — inferred from contours/imagery</option>
+                <option value="low">Low — rough estimate</option>
+              </select>
+            </div>
+            <div class="field" style="margin-top:10px;"><label>Green-reading notes</label><textarea id="hb-green-notes" rows="4"></textarea></div>
+          </div>
+
+          <button class="btn" id="hb-save" style="margin-top:16px; width:100%; justify-content:center;">Save hole</button>
+          <div id="hb-save-status" style="font-size:13px; color:#237044; font-weight:700; margin-top:8px;"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer class="app-footer">Course Guide Creator — saved locally in your browser.</footer>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/geocode.js"></script>
+<script src="js/elevation.js"></script>
+<script src="js/maps.js"></script>
+<script src="js/scorecard.js"></script>
+<script src="js/hole-builder.js"></script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  }
+</script>
+</body>
+</html>
