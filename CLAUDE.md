@@ -20,7 +20,7 @@ Owner: Matthew De Castro Silva. GitHub account/organisation: `DeCastroSilvaRecru
 ## Deployment
 
 - The site deploys via GitHub Pages from the `main` branch, root folder. Once enabled (Settings → Pages → Deploy from a branch → `main` / root), it's live at `https://decastrosilvarecruiting.github.io/Course-Guide-Creator/` a minute or two after a push — there's no separate deploy step or CI job to trigger.
-- After each deploy, tell Matthew what changed, the commit hash, and the live link. Remind him to hard-refresh (and that the installed PWA's service worker caches the app shell, so a stale view after a deploy is more likely than on a plain page).
+- After each deploy, tell Matthew what changed, the commit hash, and the live link. The service worker (`sw.js`) is network-first for the app shell as of the 2026-11-15 fix, so an online visitor gets the new code on next load without a hard refresh — the one exception is a visitor who is actually offline at that moment, who'll keep seeing whatever was last cached until they're back online.
 
 ## Ask first before
 
