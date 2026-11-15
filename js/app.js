@@ -185,6 +185,21 @@ const App = {
     }
   },
 
+async maybeRefreshElevation(record) {
+  const key = Settings.opentopoKey();
+  if (!key) return;
+  const staleNoKey =
+    !record.elevation || (record.elevation.unavailable && /API key/i.test(record.elevation.reason || ""));
+  if (!staleNoKey) return;
+  App.el("results-elevation-panel").innerHTML = `<div class="panel panel-muted">Checking elevation…</div>`;
+  const elevation = await Elevation.getCourseElevation(record.lat, record.lon, record.boundary);
+  record.elevation = elevation;
+  Store.save(record);
+  if (App.state.record === record) {
+    App.el("results-elevation-panel").innerHTML = Elevation.renderHtml(elevation);
+  }
+},
+  
   renderResults(record) {
     App.state.record = record;
     App.el("results-course-name").textContent = record.course_name;
@@ -193,6 +208,7 @@ const App = {
       ? `<div class="panel panel-green">Course boundary found from OpenStreetMap (${record.boundary.length} points).</div>`
       : `<div class="panel panel-muted">No mapped boundary found in OpenStreetMap yet.</div>`;
     App.el("results-elevation-panel").innerHTML = Elevation.renderHtml(record.elevation);
+    App.maybeRefreshElevation(record);
     App.renderScorecard(record);
     App.el("results-verification").innerHTML = Verification.renderHtml(record);
     App.el("results-builder-link").href = `hole-builder.html?slug=${encodeURIComponent(record.slug)}&hole=1`;
