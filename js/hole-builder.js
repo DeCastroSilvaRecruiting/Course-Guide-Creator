@@ -389,10 +389,16 @@ const Builder = {
       });
 
       if (map) {
+        // Only fit to points that actually have coordinates — a tee set or
+        // landing zone can exist in the data (e.g. official scorecard yardages
+        // entered before anything is mapped) with lat/lon still null, and
+        // fitting to a pile of [null, null] points collapsed the map to
+        // (0, 0) at a very tight zoom instead of showing the course.
+        const hasLatLon = (p) => p && p[0] != null && p[1] != null && !Number.isNaN(p[0]) && !Number.isNaN(p[1]);
         const allPts = [];
-        m.teeSets.forEach((t) => allPts.push([t.lat, t.lon]));
-        hole.strategy_data.landing_zones.forEach((lz) => allPts.push([lz.lat, lz.lon]));
-        hole.green_data.polygon.forEach((p) => allPts.push(p));
+        m.teeSets.forEach((t) => { if (hasLatLon([t.lat, t.lon])) allPts.push([t.lat, t.lon]); });
+        hole.strategy_data.landing_zones.forEach((lz) => { if (hasLatLon([lz.lat, lz.lon])) allPts.push([lz.lat, lz.lon]); });
+        hole.green_data.polygon.forEach((p) => { if (hasLatLon(p)) allPts.push(p); });
         if (allPts.length >= 2) MapsHelper.fitTo(map, allPts, 70);
         else if (Builder.state.record.lat) map.setCenter([Builder.state.record.lon, Builder.state.record.lat]);
       }
