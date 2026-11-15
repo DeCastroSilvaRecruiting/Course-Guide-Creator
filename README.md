@@ -22,7 +22,7 @@ Everything is saved as you go (per-browser, per-device — there's no account or
 
 ## Offline use (PWA)
 
-The app registers a service worker that caches its own pages/scripts/styles on first load, and can be "installed" from your phone's browser (Add to Home Screen) like a native app. Once a course is saved, reopening the app, viewing its scorecard or verification dashboard, and using the Play screen's distance math all keep working with no signal — which matters on a golf course, where cell coverage is often poor. The one thing that genuinely needs a connection is the map tiles and any new course searches/lookups, since those come from Mapbox/Nominatim/Overpass/OpenTopography live.
+The app registers a service worker that keeps its own pages/scripts/styles available offline, and can be "installed" from your phone's browser (Add to Home Screen) like a native app. It fetches the app shell fresh over the network whenever you're online (so updates reach you immediately) and only falls back to the cached copy when there's no connection at all. Once a course is saved, reopening the app, viewing its scorecard or verification dashboard, and using the Play screen's distance math all keep working with no signal — which matters on a golf course, where cell coverage is often poor. The one thing that genuinely needs a connection is the map tiles and any new course searches/lookups, since those come from Mapbox/Nominatim/Overpass/OpenTopography live.
 
 ## Plays-like estimate
 
