@@ -50,13 +50,20 @@ const Elevation = {
     }
   },
 
-  // Single-point elevation (small ~60m box, averaged) — used for the
-  // tee-to-green "plays like" estimate in the hole builder. Returns feet,
-  // or null if unavailable (no key, API failure, or no CORS support).
+  // Single-point elevation (small box, averaged) — used for the
+  // tee-to-green "plays like" estimate in the hole builder, and for the
+  // booklet's whole-hole elevation-tilt reading. Returns feet, or null if
+  // unavailable (no key, API failure, or no CORS support).
+  //
+  // Bug fixed: this used to pad by ~30m (0.0003deg), giving OpenTopography
+  // a ~0.004 km2 box — below its minimum-area threshold, so every call
+  // silently failed (HTTP 400) and this function always returned null.
+  // ~165m padding keeps it well above that floor while still being a
+  // genuine "this point" reading, not an area average.
   async getPointElevation(lat, lon) {
     const key = Settings.opentopoKey();
     if (!key) return null;
-    const pad = 0.0003; // ~30m
+    const pad = 0.0015; // ~165m
     const params = new URLSearchParams({
       demtype: "SRTMGL1",
       south: (lat - pad).toFixed(6),
