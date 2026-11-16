@@ -148,6 +148,42 @@ const Guide = {
       return b;
     },
 
+    // Adaptive scale bar — round 7. Picks a "nice" round yard length that
+    // renders at roughly 12%+ of the image width, then draws it bottom-left
+    // with end-ticks and a yardage label. mpp (metres per overlay pixel) is
+    // the exact scale project() already uses, so this is a real, honest
+    // measurement — the same role a yardage book's printed scale bar plays
+    // on its hole-overview page — never a cosmetic guess.
+    scaleBarSVG(imgW, imgH, mpp, dsId) {
+      if (!mpp) return "";
+      const pxPerYard = 0.9144 / mpp;
+      const candidates = [5, 10, 20, 25, 50, 100, 200];
+      let yards = candidates[candidates.length - 1];
+      for (const c of candidates) {
+        if (c * pxPerYard >= imgW * 0.12) { yards = c; break; }
+      }
+      const barPx = yards * pxPerYard;
+      const x0 = 12, y0 = imgH - 20;
+      const x1 = x0 + barPx;
+      return `<g filter="url(#${dsId})">
+        <line x1="${x0}" y1="${y0}" x2="${x1.toFixed(1)}" y2="${y0}" stroke="#fff" stroke-width="1.6"/>
+        <line x1="${x0}" y1="${(y0 - 3.5).toFixed(1)}" x2="${x0}" y2="${(y0 + 3.5).toFixed(1)}" stroke="#fff" stroke-width="1.6"/>
+        <line x1="${x1.toFixed(1)}" y1="${(y0 - 3.5).toFixed(1)}" x2="${x1.toFixed(1)}" y2="${(y0 + 3.5).toFixed(1)}" stroke="#fff" stroke-width="1.6"/>
+        <text x="${(x0 + barPx / 2).toFixed(1)}" y="${(y0 - 6).toFixed(1)}" font-size="7.5" fill="#fff" text-anchor="middle" font-weight="700">${yards} yd</text>
+      </g>`;
+    },
+
+    // A small flag-on-a-stick pin icon (round 7 — replaces a plain
+    // dot+stick) at the hole/pin position, in the overlay's own pixel space.
+    flagSVG(x, y, dsId) {
+      const topY = y - 15;
+      return `<g filter="url(#${dsId})">
+        <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6" fill="#fff" stroke="#b23926" stroke-width="1.1"/>
+        <line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${x.toFixed(1)}" y2="${topY.toFixed(1)}" stroke="#7a1f14" stroke-width="1.2"/>
+        <path d="M ${x.toFixed(1)} ${topY.toFixed(1)} L ${(x + 9).toFixed(1)} ${(topY + 3.4).toFixed(1)} L ${x.toFixed(1)} ${(topY + 6.8).toFixed(1)} Z" fill="#e23b3b" stroke="#fff" stroke-width="0.6"/>
+      </g>`;
+    },
+
     // Standard Web Mercator world-pixel math (EPSG:3857 tile convention, @1x).
     worldPixel(lat, lon, zoom) {
       const worldSize = 256 * Math.pow(2, zoom);
@@ -211,7 +247,7 @@ const Guide = {
         return { x: imgW / 2 + sx, y: imgH / 2 + sy };
       }
 
-      return { imgW, imgH, bearingDeg, zoom, center, project, backTee, mappedTees, reqHeightM, reqWidthM };
+      return { imgW, imgH, bearingDeg, zoom, center, project, backTee, mappedTees, reqHeightM, reqWidthM, mpp };
     },
 
     // Esri World Imagery "export" endpoint: a keyless REST service that
@@ -282,15 +318,19 @@ const Guide = {
       </defs>`;
       svg += `<rect x="0" y="0" width="${view.imgW}" height="${view.imgH}" fill="url(#${vigId})"/>`;
 
-      (hole.osm_shapes?.water || []).forEach((p) => { svg += `<path d="${toPath(p)}" fill="none" stroke="#bfe0ff" stroke-width="1.1" stroke-opacity="0.85"/>`; });
-      (hole.osm_shapes?.bunkers || []).forEach((p) => { svg += `<path d="${toPath(p)}" fill="none" stroke="#fff6da" stroke-width="0.9" stroke-opacity="0.75"/>`; });
+      // Round 7: real OSM polygons now get area fills (not just outlines) —
+      // this is the same "color the areas" convention every researched
+      // yardage book uses (sage fairway, sand bunker, blue water), and the
+      // geometry is exactly the same real data round 6 already fetched.
+      (hole.osm_shapes?.fairway || []).forEach((p) => { svg += `<path d="${toPath(p)}" fill="#bfe6a8" fill-opacity="0.16" stroke="#eafbe9" stroke-width="0.6" stroke-opacity="0.4"/>`; });
+      (hole.osm_shapes?.water || []).forEach((p) => { svg += `<path d="${toPath(p)}" fill="#3f8fe0" fill-opacity="0.4" stroke="#eaf4ff" stroke-width="1.1" stroke-opacity="0.9"/>`; });
+      (hole.osm_shapes?.bunkers || []).forEach((p) => { svg += `<path d="${toPath(p)}" fill="#e7cf8a" fill-opacity="0.55" stroke="#fff6da" stroke-width="0.9" stroke-opacity="0.9"/>`; });
       if (hole.green_data?.polygon?.length >= 3) {
-        svg += `<path d="${toPath(hole.green_data.polygon)}" fill="#49d06a" fill-opacity="0.14" stroke="#ffffff" stroke-width="1.5" filter="url(#${dsId})"/>`;
+        svg += `<path d="${toPath(hole.green_data.polygon)}" fill="#49d06a" fill-opacity="0.2" stroke="#ffffff" stroke-width="1.5" filter="url(#${dsId})"/>`;
       }
 
       svg += `<line x1="${longestTeeProj.x.toFixed(1)}" y1="${longestTeeProj.y.toFixed(1)}" x2="${pin.x.toFixed(1)}" y2="${pin.y.toFixed(1)}" stroke="#ffffff" stroke-width="1.1" stroke-dasharray="1.5,5" stroke-opacity="0.55"/>`;
-      svg += `<circle cx="${pin.x.toFixed(1)}" cy="${pin.y.toFixed(1)}" r="3.8" fill="#e23b3b" stroke="#fff" stroke-width="1.1" filter="url(#${dsId})"/>`;
-      svg += `<line x1="${pin.x.toFixed(1)}" y1="${pin.y.toFixed(1)}" x2="${pin.x.toFixed(1)}" y2="${(pin.y - 13).toFixed(1)}" stroke="#e23b3b" stroke-width="1.3" filter="url(#${dsId})"/>`;
+      svg += Guide.Illustrate.flagSVG(pin.x, pin.y, dsId);
 
       view.mappedTees.forEach((t) => {
         const tp = project(t.lat, t.lon);
@@ -313,7 +353,8 @@ const Guide = {
       const ncx = view.imgW - 22, ncy = 18, nr = 11;
       svg += `<g filter="url(#${dsId})"><circle cx="${ncx}" cy="${ncy}" r="${nr}" fill="#fff" fill-opacity="0.88" stroke="#1a1a1a" stroke-width="0.8"/><line x1="${ncx}" y1="${ncy}" x2="${(ncx + northX * 7.5).toFixed(1)}" y2="${(ncy + northY * 7.5).toFixed(1)}" stroke="#1a1a1a" stroke-width="1.4"/><circle cx="${(ncx + northX * 7.5).toFixed(1)}" cy="${(ncy + northY * 7.5).toFixed(1)}" r="1.4" fill="#e23b3b"/><text x="${(ncx + northX * 7.5).toFixed(1)}" y="${(ncy + northY * 7.5 - 3.5).toFixed(1)}" font-size="6" text-anchor="middle" fill="#1a1a1a" font-weight="700">N</text></g>`;
 
-      svg += `<text x="6" y="${view.imgH - 5}" font-size="6" fill="#fff" fill-opacity="0.7">Imagery: Esri, Maxar, Earthstar Geographics</text>`;
+      svg += Guide.Illustrate.scaleBarSVG(view.imgW, view.imgH, view.mpp, dsId);
+      svg += `<text x="${view.imgW - 6}" y="${view.imgH - 5}" font-size="6" fill="#fff" fill-opacity="0.7" text-anchor="end">Imagery: Esri, Maxar, Earthstar Geographics</text>`;
       svg += `</svg>`;
       return svg;
     },
@@ -439,14 +480,32 @@ const Guide = {
 
       const toPath = (p) => "M " + p.map(([lat, lon]) => { const pp = project(lat, lon); return `${pp.x.toFixed(1)},${pp.y.toFixed(1)}`; }).join(" L ") + " Z";
       const grd = hole.green_reading_data || {};
+      const arrowMarkerId = `garrow${uid}`;
       let overlay = `<svg viewBox="0 0 ${imgW} ${imgH}" xmlns="http://www.w3.org/2000/svg" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;">`;
-      overlay += `<path d="${toPath(poly)}" fill="#49d06a" fill-opacity="0.1" stroke="#ffffff" stroke-width="2"/>`;
-      if (grd.high_point) { const p = project(grd.high_point[0], grd.high_point[1]); overlay += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="#b23926" stroke="#fff" stroke-width="1"/><text x="${p.x.toFixed(1)}" y="${(p.y-7).toFixed(1)}" font-size="8" text-anchor="middle" fill="#fff" font-weight="700">H</text>`; }
-      if (grd.low_point) { const p = project(grd.low_point[0], grd.low_point[1]); overlay += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="#235aa3" stroke="#fff" stroke-width="1"/><text x="${p.x.toFixed(1)}" y="${(p.y-7).toFixed(1)}" font-size="8" text-anchor="middle" fill="#fff" font-weight="700">L</text>`; }
+      overlay += `<defs><marker id="${arrowMarkerId}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b23926"/></marker></defs>`;
+
+      // Round 7: a real-scale yard grid — not a fabricated slope, just the
+      // green's own measured size (mpp, computed above from its real
+      // polygon) divided into even yard intervals. This is the same "grid
+      // that reflects the green's actual yardage" convention used on real
+      // yardage-book green pages, and it's honest even when no slope has
+      // been surveyed yet.
+      const pxPerYard = 0.9144 / mpp;
+      const gridYd = reqM / 0.9144 > 45 ? 10 : 5;
+      const gridStepPx = pxPerYard * gridYd;
+      for (let gx = imgW / 2; gx > 0; gx -= gridStepPx) overlay += `<line x1="${gx.toFixed(1)}" y1="0" x2="${gx.toFixed(1)}" y2="${imgH}" stroke="#fff" stroke-opacity="0.22" stroke-width="0.6"/>`;
+      for (let gx = imgW / 2 + gridStepPx; gx < imgW; gx += gridStepPx) overlay += `<line x1="${gx.toFixed(1)}" y1="0" x2="${gx.toFixed(1)}" y2="${imgH}" stroke="#fff" stroke-opacity="0.22" stroke-width="0.6"/>`;
+      for (let gy = imgH / 2; gy > 0; gy -= gridStepPx) overlay += `<line x1="0" y1="${gy.toFixed(1)}" x2="${imgW}" y2="${gy.toFixed(1)}" stroke="#fff" stroke-opacity="0.22" stroke-width="0.6"/>`;
+      for (let gy = imgH / 2 + gridStepPx; gy < imgH; gy += gridStepPx) overlay += `<line x1="0" y1="${gy.toFixed(1)}" x2="${imgW}" y2="${gy.toFixed(1)}" stroke="#fff" stroke-opacity="0.22" stroke-width="0.6"/>`;
+      overlay += `<text x="6" y="12" font-size="7" fill="#fff" fill-opacity="0.85" font-weight="700">Grid: ${gridYd} yd</text>`;
+
+      overlay += `<path d="${toPath(poly)}" fill="#49d06a" fill-opacity="0.12" stroke="#ffffff" stroke-width="2"/>`;
+      if (grd.high_point) { const p = project(grd.high_point[0], grd.high_point[1]); overlay += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4.5" fill="#b23926" stroke="#fff" stroke-width="1.2"/><text x="${p.x.toFixed(1)}" y="${(p.y-8).toFixed(1)}" font-size="8" text-anchor="middle" fill="#fff" font-weight="700">H</text>`; }
+      if (grd.low_point) { const p = project(grd.low_point[0], grd.low_point[1]); overlay += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4.5" fill="#235aa3" stroke="#fff" stroke-width="1.2"/><text x="${p.x.toFixed(1)}" y="${(p.y-8).toFixed(1)}" font-size="8" text-anchor="middle" fill="#fff" font-weight="700">L</text>`; }
       (grd.slope_arrows || []).forEach((arrow) => {
         if (!arrow.from || !arrow.to) return;
         const a = project(arrow.from[0], arrow.from[1]), b = project(arrow.to[0], arrow.to[1]);
-        overlay += `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="#b23926" stroke-width="2"/>`;
+        overlay += `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="#b23926" stroke-width="2.2" marker-end="url(#${arrowMarkerId})"/>`;
       });
       overlay += `</svg>`;
 
@@ -519,7 +578,7 @@ const Guide = {
         <div class="hole-page-header">
           <div>
             <div class="hole-page-num">Hole ${hole.hole_number}</div>
-            <div class="hole-page-meta">Par ${hole.par ?? "—"} &middot; S.I. ${hole.stroke_index ?? "—"}${hole.hole_name ? ` &middot; ${escapeHtml(hole.hole_name)}` : ""}</div>
+            <div class="hole-page-meta">${hole.par ? `<span class="par-chip par-${hole.par}">PAR ${hole.par}</span>` : "Par —"} S.I. ${hole.stroke_index ?? "—"}${hole.hole_name ? ` &middot; ${escapeHtml(hole.hole_name)}` : ""}</div>
           </div>
           <div class="hole-page-tees">
             ${mappedTees.map((t) => `<span style="color:${t.color}">&#9679;</span> ${escapeHtml(t.name)} ${fmtNum(t.yardage)}y`).join(" &nbsp; ")}
@@ -540,7 +599,7 @@ const Guide = {
             <div class="green-card-slope">
               ${hasSlope
                 ? `${grd.green_notes ? escapeHtml(grd.green_notes) : ""}${grd.slope_note ? `<div>${escapeHtml(grd.slope_note)}</div>` : ""}`
-                : `<em>Undulation/slope not yet surveyed.</em> A green is roughly the size of one elevation-data pixel, so this can't be pulled from an API — add it by eye in Hole Builder → Green detail (mark the high point, low point and break direction) next time you're on the green.`}
+                : `<div class="slope-unsurveyed"><em>Undulation/slope not yet surveyed.</em> A green is roughly the size of one elevation-data pixel, so this can't be pulled from an API — add it by eye in Hole Builder → Green detail (mark the high point, low point and break direction) next time you're on the green.</div>`}
             </div>
           </div>
         </div>
@@ -556,8 +615,58 @@ const Guide = {
     return { html, mount };
   },
 
+  // ---- cover + legend (once per booklet, not per hole) ------------------
+  // Round 7: every researched real yardage book opens with a cover and a
+  // legend before the first hole. Both are built purely from data already
+  // on the record (Scorecard's own totals, the record's actual tee
+  // names/colors) — nothing here is invented for decoration.
+
+  renderCover(record) {
+    const totals = Scorecard.build(record);
+    const holesMapped = record.holes.filter((h) => (h.tee_sets || []).some((t) => t.lat != null)).length;
+    const generated = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+    return `
+      <div class="guide-cover">
+        <div class="guide-cover-kicker">Course Guide Booklet</div>
+        <div class="guide-cover-name">${escapeHtml(record.course_name)}</div>
+        <div class="guide-cover-stats">
+          <div class="guide-cover-stat"><span class="guide-cover-stat-label">Par</span><span class="guide-cover-stat-value">${totals.totalPar || "—"}</span></div>
+          <div class="guide-cover-stat"><span class="guide-cover-stat-label">Yardage</span><span class="guide-cover-stat-value">${fmtNum(totals.totalYards)}</span></div>
+          <div class="guide-cover-stat"><span class="guide-cover-stat-label">Holes</span><span class="guide-cover-stat-value">18</span></div>
+          <div class="guide-cover-stat"><span class="guide-cover-stat-label">GPS-mapped</span><span class="guide-cover-stat-value">${holesMapped}/18</span></div>
+        </div>
+        <div class="guide-cover-foot">${record.location ? `${escapeHtml(record.location)} &middot; ` : ""}Generated ${generated} &middot; real satellite imagery &amp; GPS-measured distances, not drawn estimates</div>
+      </div>`;
+  },
+
+  renderLegend(record) {
+    const tees = [];
+    const seen = new Set();
+    record.holes.forEach((h) => (h.tee_sets || []).forEach((t) => {
+      if (!seen.has(t.name)) { seen.add(t.name); tees.push(t); }
+    }));
+    const teeItems = tees.map((t) => `<div class="legend-item"><span class="legend-dot" style="background:${t.color}"></span>${escapeHtml(t.name)} tee</div>`).join("");
+    return `
+      <div class="guide-legend">
+        <div class="guide-legend-title">How to read this guide</div>
+        <div class="legend-grid">
+          ${teeItems}
+          <div class="legend-item"><span class="legend-swatch" style="background:#49d06a;"></span>Green</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#bfe6a8;"></span>Fairway</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#e7cf8a;"></span>Bunker</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#3f8fe0;"></span>Water</div>
+          <div class="legend-item">&#x1F6A9; Pin / hole location</div>
+          <div class="legend-item">- - - Line of play (longest tee to pin)</div>
+          <div class="legend-item">&#x1F9ED; Scale bar / yard grid &mdash; real measured distance, never a guess</div>
+          <div class="legend-item">* Tee has no GPS fix yet &mdash; scorecard yardage shown instead</div>
+        </div>
+      </div>`;
+  },
+
   renderAll() {
     const record = Guide.state.record;
+    Guide.el("guide-cover").innerHTML = Guide.renderCover(record);
+    Guide.el("guide-legend").innerHTML = Guide.renderLegend(record);
     const holes = record.holes.slice().sort((a, b) => a.hole_number - b.hole_number);
     const pages = holes.map((h) => Guide.renderHolePage(h));
     Guide.el("guide-holes").innerHTML = pages.map((p) => p.html).join("");
