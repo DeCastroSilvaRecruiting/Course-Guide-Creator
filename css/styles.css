@@ -225,3 +225,40 @@ footer.app-footer { text-align: center; color: var(--muted-2); font-size: 12px; 
   .scorecard-halves { grid-template-columns: 1fr; }
   .field-row { grid-template-columns: 1fr; }
 }
+
+
+/* Course guide booklet (guide.html) */
+.booklet { display: flex; flex-direction: column; gap: 18px; }
+.hole-page {
+     background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+     box-shadow: var(--shadow); padding: 22px 26px;
+}
+.hole-page-header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.hole-page-num { color: var(--green-900); font-size: 26px; font-weight: 900; }
+.hole-page-meta { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.hole-page-tees { color: var(--muted-2); font-size: 12px; text-align: right; }
+.hole-page-images { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.hole-image-wrap { flex: 1 1 420px; min-width: 300px; }
+.hole-image-wrap img { width: 100%; height: auto; border-radius: var(--radius-md); border: 1px solid var(--border-2); display: block; }
+.image-caption { color: var(--muted-2); font-size: 11px; line-height: 1.5; margin-top: 6px; }
+.green-card { flex: 0 0 240px; width: 240px; }
+.green-card img { width: 100%; height: auto; border-radius: var(--radius-md); border: 1px solid var(--border-2); display: block; }
+.green-card-stats { display: flex; gap: 14px; margin-top: 8px; font-size: 13px; color: var(--green-900); }
+.green-card-slope { font-size: 11.5px; color: var(--muted); line-height: 1.5; margin-top: 8px; }
+table.guide-distances { margin-top: 4px; }
+table.guide-distances .row-green td { background: var(--green-50); font-weight: 700; }
+.guide-footnote { color: var(--muted-2); font-size: 11px; margin: 8px 0 0; }
+
+@media print {
+     body { background: #fff; }
+     .no-print { display: none !important; }
+     .shell { max-width: none; margin: 0; padding: 0; }
+     .booklet { gap: 0; }
+     .hole-page {
+            box-shadow: none; border: none; border-radius: 0;
+            padding: 14mm 12mm; break-after: page; page-break-after: always;
+     }
+     .hole-page:last-child { break-after: auto; page-break-after: auto; }
+     .hole-page-images { flex-wrap: nowrap; }
+     .green-card { flex: 0 0 180px; width: 180px; }
+}
