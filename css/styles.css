@@ -27,6 +27,9 @@
   --radius-md: 14px;
   --radius-sm: 10px;
   --shadow: 0 14px 34px rgba(23, 61, 43, .09);
+  --font-display: 'Oswald', 'Arial Narrow', sans-serif;
+  --parchment: #faf7ee;
+  --parchment-border: #ddd3b4;
 }
 
 * { box-sizing: border-box; }
@@ -228,14 +231,47 @@ footer.app-footer { text-align: center; color: var(--muted-2); font-size: 12px; 
 
 
 /* Course guide booklet (guide.html) */
+
+/* Cover page — round 7: a real yardage-book opens with a cover, not a
+   hole. Totals come straight from Scorecard.build(), nothing invented. */
+.guide-cover {
+  background: linear-gradient(165deg, var(--green-900) 0%, #0f2a1d 100%);
+  color: #fff; border-radius: var(--radius-lg); box-shadow: var(--shadow);
+  padding: 42px 38px 34px; margin-bottom: 18px; position: relative; overflow: hidden;
+}
+.guide-cover::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: radial-gradient(circle at 86% 12%, rgba(226,184,103,.16), transparent 55%);
+}
+.guide-cover-kicker { color: #e7b867; font-size: 12px; text-transform: uppercase; letter-spacing: .22em; font-weight: 800; margin-bottom: 16px; position: relative; }
+.guide-cover-name { font-family: var(--font-display); font-weight: 600; font-size: 42px; line-height: 1.08; text-transform: uppercase; margin: 0 0 22px; max-width: 700px; position: relative; }
+.guide-cover-stats { display: flex; flex-wrap: wrap; gap: 10px 30px; position: relative; }
+.guide-cover-stat-label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: #bcd3c2; font-weight: 700; margin-bottom: 5px; }
+.guide-cover-stat-value { font-family: var(--font-display); font-size: 23px; font-weight: 600; color: #fff; }
+.guide-cover-foot { margin-top: 28px; font-size: 11.5px; color: #a9c3b0; position: relative; }
+
+/* Legend — round 7: once-per-booklet key, built from the record's own
+   tee names/colors, matching the "include a legend" convention every
+   real yardage book uses. */
+.guide-legend {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow); padding: 20px 26px; margin-bottom: 18px;
+}
+.guide-legend-title { font-family: var(--font-display); font-size: 14px; text-transform: uppercase; letter-spacing: .1em; color: var(--green-900); margin: 0 0 14px; }
+.legend-grid { display: flex; flex-wrap: wrap; gap: 10px 26px; }
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink); }
+.legend-swatch { width: 15px; height: 15px; border-radius: 4px; flex: 0 0 auto; display: inline-block; border: 1px solid rgba(0,0,0,.12); }
+.legend-dot { width: 11px; height: 11px; border-radius: 50%; flex: 0 0 auto; border: 1.5px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.25); }
+
 .booklet { display: flex; flex-direction: column; gap: 18px; }
 .hole-page {
-     background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+     background: var(--parchment); border: 1px solid var(--parchment-border); border-radius: var(--radius-lg);
      box-shadow: var(--shadow); padding: 22px 26px;
 }
 .hole-page-header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
-.hole-page-num { color: var(--green-900); font-size: 26px; font-weight: 900; }
-.hole-page-meta { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.hole-page-num { font-family: var(--font-display); color: var(--green-900); font-size: 32px; font-weight: 600; }
+.hole-page-meta { color: var(--muted); font-size: 13px; margin-top: 4px; }
+.hole-page-meta .par-chip { margin-right: 7px; vertical-align: middle; }
 .hole-page-tees { color: var(--muted-2); font-size: 12px; text-align: right; }
 .hole-page-images { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
 .hole-image-wrap { flex: 1 1 420px; min-width: 300px; }
@@ -245,6 +281,7 @@ footer.app-footer { text-align: center; color: var(--muted-2); font-size: 12px; 
 .green-card img { width: 100%; height: auto; border-radius: var(--radius-md); border: 1px solid var(--border-2); display: block; }
 .green-card-stats { display: flex; gap: 14px; margin-top: 8px; font-size: 13px; color: var(--green-900); }
 .green-card-slope { font-size: 11.5px; color: var(--muted); line-height: 1.5; margin-top: 8px; }
+.slope-unsurveyed { border-left: 3px dashed var(--border-2); padding-left: 8px; }
 table.guide-distances { margin-top: 4px; }
 table.guide-distances .row-green td { background: var(--green-50); font-weight: 700; }
 .guide-footnote { color: var(--muted-2); font-size: 11px; margin: 8px 0 0; }
@@ -254,6 +291,11 @@ table.guide-distances .row-green td { background: var(--green-50); font-weight: 
      .no-print { display: none !important; }
      .shell { max-width: none; margin: 0; padding: 0; }
      .booklet { gap: 0; }
+     .guide-cover, .guide-legend {
+            border-radius: 0; box-shadow: none; break-after: page; page-break-after: always;
+     }
+     .guide-cover { padding: 26mm 16mm; }
+     .guide-legend { padding: 16mm; border: none; }
      .hole-page {
             box-shadow: none; border: none; border-radius: 0;
             padding: 14mm 12mm; break-after: page; page-break-after: always;
