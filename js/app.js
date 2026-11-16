@@ -212,6 +212,7 @@ async maybeRefreshElevation(record) {
     App.renderScorecard(record);
     App.el("results-verification").innerHTML = Verification.renderHtml(record);
     App.el("results-builder-link").href = `hole-builder.html?slug=${encodeURIComponent(record.slug)}&hole=1`;
+        App.el("results-guide-link").href = `guide.html?slug=${encodeURIComponent(record.slug)}`;
     App.el("results-play-link").href = `play.html?slug=${encodeURIComponent(record.slug)}`;
 
     const mapEl = App.el("results-map");
