@@ -98,7 +98,19 @@ const App = {
     statusEl.textContent = "Searching…";
     App.el("search-submit").disabled = true;
     try {
-      const candidates = await Geocode.searchCandidates(courseName, location);
+      // Local-first: try the bundled ~5000-course worldwide index (instant,
+      // no network) before falling back to live Nominatim search. Local
+      // matches are only used when there's no location filter typed, since
+      // the local index doesn't carry city/region text to match against.
+      let candidates = [];
+      let fromLocal = false;
+      if (!location) {
+        candidates = await CourseDB.search(courseName, 5);
+        fromLocal = candidates.length > 0;
+      }
+      if (!candidates.length) {
+        candidates = await Geocode.searchCandidates(courseName, location);
+      }
       if (!candidates.length) {
         statusEl.innerHTML = `<div class="panel panel-red">No course found for "${escapeHtml(courseName)}". Try adding a city/state, or check the spelling.</div>`;
         return;
@@ -108,7 +120,7 @@ const App = {
       } else {
         App.renderConfirmation(candidates);
       }
-      statusEl.textContent = "";
+      statusEl.textContent = fromLocal ? "Matched instantly from the built-in course index." : "";
     } catch (e) {
       console.error(e);
       statusEl.innerHTML = `<div class="panel panel-red">Search failed: ${escapeHtml(e.message)}</div>`;
